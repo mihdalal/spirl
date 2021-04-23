@@ -46,3 +46,16 @@ class NoGoalKitchenEnv(KitchenEnv):
     def reset(self, *args, **kwargs):
         obs = super().reset(*args, **kwargs)
         return obs[:int(obs.shape[0]/2)]
+
+class ImageKitchenEnv(GymEnv):
+    """Tiny wrapper around GymEnv for Kitchen tasks."""
+    SUBTASKS = ['microwave', 'kettle', 'slide cabinet', 'hinge cabinet', 'bottom burner', 'light switch', 'top burner']
+    def step(self, *args, **kwargs):
+        obs, rew, done, info = super().step(*args, **kwargs)
+        obs = self._wrap_observation(self.render(mode='rgb_array'))
+        return obs, np.float64(rew), done, self._postprocess_info(info)     # casting reward to float64 is important for getting shape later
+
+    def reset(self):
+        super().reset()
+        obs = self.render(mode='rgb_array')
+        return self._wrap_observation(obs)
