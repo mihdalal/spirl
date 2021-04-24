@@ -99,7 +99,16 @@ class D4RLVisionSequenceSplitDataset(Dataset):
         self.shuffle = shuffle
         self.img_sz = resolution
 
-        self.dataset = h5py.File(data_dir,'r+')
+        with h5py.File(data_dir,'r+') as f:
+            self.dataset = dict(
+                observations=np.array(f['observations']),
+                images=np.array(f['images']),
+                terminals=np.array(f['terminals']),
+                rewards=np.array(f['rewards']),
+                actions=np.array(f['actions']),
+            )
+
+        print("Successfully opened: ", data_dir)
 
         # split dataset into sequences
         seq_end_idxs = np.where(self.dataset['terminals'])[0]

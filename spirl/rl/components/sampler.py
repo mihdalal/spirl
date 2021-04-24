@@ -195,7 +195,7 @@ class HierarchicalSampler(Sampler):
                         if done or self._episode_step >= self._max_episode_len:
                             if not done:    # force done to be True for timeout
                                 ll_experience_batch[-1].done = True
-                                if hl_experience_batch:   # can potentially be empty 
+                                if hl_experience_batch:   # can potentially be empty
                                     hl_experience_batch[-1].done = True
                             self._episode_reset(global_step)
 

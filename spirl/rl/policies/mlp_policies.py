@@ -137,3 +137,19 @@ class HybridConvMLPPolicy(ConvPolicy):
         )
         return super()._compute_action_dist(split_obs)
 
+class SplitObsConvPolicy(ConvPolicy):
+    """Splits off unused part of observations."""
+    def _default_hparams(self):
+        default_dict = ParamDict({
+            'unused_obs_size': None,    # dimensionality of split off observation part
+            'discard_part': 'back',     # which part of observation to discard ['front', 'back']
+        })
+        return super()._default_hparams().overwrite(default_dict)
+
+    def _compute_action_dist(self, raw_obs):
+        if self._hp.discard_part == 'front':
+            return super()._compute_action_dist(raw_obs[:, self._hp.unused_obs_size:])
+        elif self._hp.discard_part == 'back':
+            return super()._compute_action_dist(raw_obs[:, :-self._hp.unused_obs_size])
+        else:
+            raise ValueError("Cannot parse discard_part parameter {}!".format(self._hp.discard_part))

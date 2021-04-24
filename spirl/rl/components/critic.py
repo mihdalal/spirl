@@ -102,3 +102,20 @@ class SplitObsMLPCritic(MLPCritic):
         else:
             raise ValueError("Cannot parse discard_part parameter {}!".format(self._hp.discard_part))
 
+class SplitObsConvCritic(ConvCritic):
+    """Splits off unused part of observations."""
+    def _default_hparams(self):
+        default_dict = ParamDict({
+            'unused_obs_size': None,    # dimensionality of split off observation part
+            'discard_part': 'back',     # which part of observation to discard ['front', 'back']
+        })
+        return super()._default_hparams().overwrite(default_dict)
+
+    def forward(self, raw_obs, *args, **kwargs):
+        if self._hp.discard_part == 'front':
+            return super().forward(raw_obs[:, self._hp.unused_obs_size:], *args, **kwargs)
+        elif self._hp.discard_part == 'back':
+            return super().forward(raw_obs[:, :-self._hp.unused_obs_size], *args, **kwargs)
+        else:
+            raise ValueError("Cannot parse discard_part parameter {}!".format(self._hp.discard_part))
+
