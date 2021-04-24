@@ -47,9 +47,7 @@ class NoGoalKitchenEnv(KitchenEnv):
         obs = super().reset(*args, **kwargs)
         return obs[:int(obs.shape[0]/2)]
 
-class ImageKitchenEnv(GymEnv):
-    """Tiny wrapper around GymEnv for Kitchen tasks."""
-    SUBTASKS = ['microwave', 'kettle', 'slide cabinet', 'hinge cabinet', 'bottom burner', 'light switch', 'top burner']
+class ImageKitchenEnv(KitchenEnv):
     def step(self, *args, **kwargs):
         obs, rew, done, info = super().step(*args, **kwargs)
         obs = self._wrap_observation(self.render(mode='rgb_array'))

@@ -12,7 +12,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 configuration = {
     'model': ImageSkillPriorMdl,
     'logger': SkillSpaceLogger,
-    'data_dir': 'data/kitchen-vision/kitchen-mixed-v0-vision-v2.hdf5',
+    'data_dir': 'data/kitchen-vision/kitchen-mixed-v0-vision-64.hdf5',
     'epoch_cycles_train': 10,
     'evaluator': TopOfNSequenceEvaluator,
     'top_of_n_eval': 100,
@@ -23,10 +23,11 @@ configuration = AttrDict(configuration)
 model_config = AttrDict(
     state_dim=data_spec.state_dim,
     action_dim=data_spec.n_actions,
-    n_rollout_steps=10,
-    kl_div_weight=1e-2, #try 5e-4 as well
-    prior_input_res=data_spec.res,
+    kl_div_weight=1e-2, #try 5e-4
     n_input_frames=2,
+    prior_input_res=data_spec.res,
+    nz_vae=10,
+    n_rollout_steps=10,
     nz_enc=128,
     nz_mid=128,
     n_processing_layers=5,

@@ -8,7 +8,7 @@ from spirl.rl.components.sampler import MultiImageAugmentedHierarchicalSampler
 from spirl.configs.default_data_configs.kitchen_vision import data_spec
 import os
 import copy
-
+from spirl.models.closed_loop_spirl_mdl import ImageClSPiRLMdl
 from spirl.utils.general_utils import AttrDict
 from spirl.rl.components.agent import FixedIntervalHierarchicalAgent
 from spirl.rl.envs.kitchen import KitchenEnv
@@ -75,7 +75,7 @@ ll_model_params = AttrDict(
 # LL Agent
 ll_agent_config = copy.deepcopy(base_agent_params)
 ll_agent_config.update(AttrDict(
-    model=ImageSkillPriorMdl,
+    model=ImageClSPiRLMdl,
     model_params=ll_model_params,
     model_checkpoint=os.path.join(os.environ["EXP_DIR"],
                                   "skill_prior_learning/kitchen/vision"),
