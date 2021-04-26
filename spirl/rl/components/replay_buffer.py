@@ -113,6 +113,21 @@ class UniformReplayBuffer(ReplayBuffer):
                 sampled_transitions[key] = self._replay_buffer[key][idxs]
         return sampled_transitions
 
+class ImageUniformReplayBuffer(ReplayBuffer):
+    """Samples batch uniformly from all experience samples in the buffer."""
+    def sample(self, n_samples, filter=None):
+        assert n_samples <= self.size      # need enough samples in replay buffer
+        assert isinstance(self.size, int)   # need integer-valued size
+        idxs = np.random.choice(np.arange(self.size), size=n_samples)
+
+        sampled_transitions = AttrDict()
+        for key in self._replay_buffer:
+            if filter is None or key in filter:
+                if key == 'observation':
+                    sampled_transitions[key] = self._replay_buffer[key][idxs]*2. - 1.0
+                sampled_transitions[key] = self._replay_buffer[key][idxs]
+        return sampled_transitions
+
 
 class FilteredReplayBuffer(ReplayBuffer):
     """Has option to *not* store certain attributes in replay (eg to save memory by not storing images."""

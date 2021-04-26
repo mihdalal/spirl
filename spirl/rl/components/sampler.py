@@ -210,6 +210,11 @@ class HierarchicalSampler(Sampler):
         self.last_hl_obs, self.last_hl_action = None, None
         self.reward_since_last_hl = 0
 
+class ImageSampler(Sampler):
+    """Appends image rendering to raw observation."""
+    def _postprocess_obs(self, obs):
+        img = self._env.render().transpose(2, 0, 1).flatten()
+        return img
 
 class ImageAugmentedSampler(Sampler):
     """Appends image rendering to raw observation."""
@@ -245,6 +250,11 @@ class ACImageAugmentedSampler(ImageAugmentedSampler):
 class ACMultiImageAugmentedSampler(MultiImageAugmentedSampler, ACImageAugmentedSampler):
     def _reset_env(self):
         return ACImageAugmentedSampler._reset_env(self)
+
+
+class ImageHierarchicalSampler(HierarchicalSampler, ImageSampler):
+    def _postprocess_obs(self, *args, **kwargs):
+        return ImageSampler._postprocess_obs(self, *args, **kwargs)
 
 
 class ImageAugmentedHierarchicalSampler(HierarchicalSampler, ImageAugmentedSampler):
