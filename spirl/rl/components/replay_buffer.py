@@ -124,7 +124,7 @@ class ImageUniformReplayBuffer(ReplayBuffer):
         for key in self._replay_buffer:
             if filter is None or key in filter:
                 if key == 'observation':
-                    sampled_transitions[key] = self._replay_buffer[key][idxs]*2. - 1.0
+                    sampled_transitions[key] = (self._replay_buffer[key][idxs]/255.)*2. - 1.0
                 sampled_transitions[key] = self._replay_buffer[key][idxs]
         return sampled_transitions
 
