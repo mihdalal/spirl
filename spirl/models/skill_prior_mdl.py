@@ -388,11 +388,18 @@ class ImageSkillPriorMdl(SkillPriorMdl):
         """Utility to unflatten [obs, prior_obs] concatenated observation (for RL usage)."""
         assert len(raw_obs.shape) == 2 and raw_obs.shape[1] == self.state_dim \
                + self._hp.prior_input_res**2 * 3 * self._hp.n_input_frames
+        raw_obs = self.pre_process_img(raw_obs)
         return AttrDict(
             obs=raw_obs[:, :self.state_dim],
             prior_obs=raw_obs[:, self.state_dim:].reshape(raw_obs.shape[0], 3*self._hp.n_input_frames,
                                                           self._hp.prior_input_res, self._hp.prior_input_res)
         )
+    def pre_process_img(self, raw_obs):
+        if raw_obs.max() > 1 or raw_obs.min < -1:
+            #images should be between -1 and 1
+            return (raw_obs/255.)*2. - 1.0
+        else:
+            return raw_obs
 
     @property
     def prior_input_size(self):
