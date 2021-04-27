@@ -11,7 +11,7 @@ import copy
 from spirl.utils.general_utils import AttrDict
 from spirl.rl.components.agent import FixedIntervalHierarchicalAgent
 from spirl.rl.envs.kitchen import KitchenEnv
-from spirl.rl.components.replay_buffer import UniformReplayBuffer
+from spirl.rl.components.replay_buffer import ImageUniformReplayBuffer, UniformReplayBuffer
 from spirl.rl.agents.ac_agent import SACAgent
 from spirl.rl.agents.skill_space_agent import ACSkillSpaceAgent
 
@@ -48,7 +48,7 @@ sampler_config = AttrDict(
 
 base_agent_params = AttrDict(
     batch_size=256,
-    replay=UniformReplayBuffer,
+    replay=ImageUniformReplayBuffer,
     replay_params=replay_params,
     clip_q_target=False,
     unused_obs_size=0,

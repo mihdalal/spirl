@@ -86,7 +86,6 @@ hl_policy_params = AttrDict(
     action_dim=10,       # z-dimension of the skill VAE
     max_action_range=2.,        # prior is Gaussian with unit variance
     unused_obs_size=0,
-
 )
 hl_policy_params.update(AttrDict(
     prior_model=ll_agent_config.model,
