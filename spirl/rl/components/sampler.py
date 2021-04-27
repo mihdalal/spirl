@@ -216,6 +216,20 @@ class ImageSampler(Sampler):
         img = self._env.render().transpose(2, 0, 1).flatten()
         return img
 
+class MultiImageSampler(Sampler):
+    """Appends image rendering to raw observation."""
+    def _episode_reset(self, global_step=None):
+        self._past_frames = deque(maxlen=self._hp.n_frames)     # build ring-buffer of past images
+        super()._episode_reset(global_step)
+
+    def _postprocess_obs(self, obs):
+        img = self._env.render().transpose(2, 0, 1).flatten()
+        if not self._past_frames:   # initialize past frames with N copies of current frame
+            [self._past_frames.append(img) for _ in range(self._hp.n_frames - 1)]
+        self._past_frames.append(img)
+        stacked_img = np.concatenate(list(self._past_frames), axis=0)
+        return stacked_img
+
 class ImageAugmentedSampler(Sampler):
     """Appends image rendering to raw observation."""
     def _postprocess_obs(self, obs):
@@ -261,6 +275,12 @@ class ImageAugmentedHierarchicalSampler(HierarchicalSampler, ImageAugmentedSampl
     def _postprocess_obs(self, *args, **kwargs):
         return ImageAugmentedSampler._postprocess_obs(self, *args, **kwargs)
 
+class MultiImageHierarchicalSampler(HierarchicalSampler, MultiImageSampler):
+    def _postprocess_obs(self, *args, **kwargs):
+        return MultiImageSampler._postprocess_obs(self, *args, **kwargs)
+
+    def _episode_reset(self, *args, **kwargs):
+        return MultiImageSampler._episode_reset(self, *args, **kwargs)
 
 class MultiImageAugmentedHierarchicalSampler(HierarchicalSampler, MultiImageAugmentedSampler):
     def _postprocess_obs(self, *args, **kwargs):
