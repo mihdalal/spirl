@@ -1,10 +1,12 @@
+import time
+from rad.kitchen_train import compute_path_info
 import torch
 import os
 import imp
 import json
 from tqdm import tqdm
 from collections import defaultdict
-
+from rlkit.core import logger as rlkit_logger
 from spirl.rl.components.params import get_args
 from spirl.train import set_seeds, make_path, datetime_str, save_config, get_exp_dir, save_checkpoint
 from spirl.components.checkpointer import CheckpointHandler, save_cmd, save_git, get_config_path
@@ -21,10 +23,14 @@ WANDB_ENTITY_NAME = 'mdalal'
 
 class RLTrainer:
     """Sets up RL training loop, instantiates all components, runs training."""
-    def __init__(self, args):
+    def __init__(self, args, variant=None):
+
         self.args = args
         self.setup_device()
 
+        self.args.path = variant['path']
+        self.args.prefix = rlkit_logger.get_exp_name()
+        self.args.new_dir=True
         # set up params
         self.conf = self.get_config()
         update_with_mpi_config(self.conf)   # self.conf.mpi = AttrDict(is_chef=True)
@@ -52,6 +58,10 @@ class RLTrainer:
         self.conf.env.seed = self._hp.seed
         if 'task_params' in self.conf.env: self.conf.env.task_params.seed=self._hp.seed
         if 'general' in self.conf: self.conf.general.seed=self._hp.seed
+
+        self.conf.env.env_kwargs = variant['env_kwargs']
+        self.conf.env.env_suite = variant['env_suite']
+        self.conf.env.env_name = variant['env_name']
         self.env = self._hp.environment(self.conf.env)
         self.conf.agent.env_params = self.env.agent_params      # (optional) set params from env for agent
         if self.is_chef:
@@ -103,6 +113,11 @@ class RLTrainer:
         if self._hp.n_warmup_steps > 0:
             self.warmup()
 
+        st = time.time()
+        start_time = time.time()
+        epoch_start_time = time.time()
+        train_expl_st = time.time()
+        total_train_expl_time = 0
         for epoch in range(start_epoch, self._hp.num_epochs):
             print("Epoch {}".format(epoch))
             self.train_epoch(epoch)
@@ -114,7 +129,19 @@ class RLTrainer:
                     'state_dict': self.agent.state_dict(),
                 }, os.path.join(self._hp.exp_path, 'weights'), CheckpointHandler.get_ckpt_name(epoch))
                 self.agent.save_state(self._hp.exp_path)
+                total_train_expl_time += time.time()-train_expl_st
                 self.val()
+                rlkit_logger.record_tabular(
+                    "time/epoch (s)", time.time() - epoch_start_time
+                )
+                rlkit_logger.record_tabular("time/total (s)", time.time() - start_time)
+                rlkit_logger.record_tabular("time/training and exploration (s)", total_train_expl_time)
+                rlkit_logger.record_tabular("trainer/num train calls", self.n_update_steps)
+                rlkit_logger.record_tabular("exploration/num steps total", self.global_step)
+                rlkit_logger.record_tabular("Epoch", epoch)
+                rlkit_logger.dump_tabular(with_prefix=False, with_timestamp=False)
+                epoch_start_time = time.time()
+                train_expl_st = time.time()
 
     def train_epoch(self, epoch):
         """Run inner training loop."""
@@ -156,6 +183,15 @@ class RLTrainer:
                         val_rollout_storage.append(self.sampler.sample_episode(is_train=False, render=True))
 
         rollout_stats = val_rollout_storage.rollout_stats()
+        all_infos = []
+        for rollout in val_rollout_storage.rollouts:
+            ep_infos = [rollout['info'][i][0] for i in range(len(rollout['info']))]
+            all_infos.append(ep_infos)
+        rlkit_logger.record_dict(
+            {"Average Returns": rollout_stats.avg_reward}, prefix="evaluation/"
+        )
+        statistics = compute_path_info(all_infos)
+        rlkit_logger.record_dict(statistics, prefix="evaluation/")
         if self.is_chef:
             with timing("Eval log time: "):
                 self.agent.log_outputs(rollout_stats, val_rollout_storage,
@@ -306,6 +342,8 @@ class RLTrainer:
     def is_chef(self):
         return self.conf.mpi.is_chef
 
+def experiment(variant):
+    RLTrainer(args=get_args(), variant=variant)
 
 if __name__ == '__main__':
     RLTrainer(args=get_args())

@@ -10,7 +10,7 @@ import copy
 from spirl.models.closed_loop_spirl_mdl import ImageClSPiRLMdl
 from spirl.utils.general_utils import AttrDict
 from spirl.rl.components.agent import FixedIntervalHierarchicalAgent
-from spirl.rl.envs.kitchen import KitchenEnv
+from spirl.rl.envs.kitchen import KitchenEnv,PrimitivesEnv
 from spirl.rl.components.replay_buffer import ImageUniformReplayBuffer
 from spirl.rl.agents.ac_agent import SACAgent
 from spirl.rl.agents.skill_space_agent import ACSkillSpaceAgent
@@ -23,13 +23,13 @@ notes = 'hierarchical RL on the kitchen vision env'
 configuration = {
     'seed': 42,
     'agent': FixedIntervalHierarchicalAgent,
-    'environment': KitchenEnv,
+    'environment': PrimitivesEnv,
     'sampler': ImageHierarchicalSampler,
     'data_dir': '.',
-    'num_epochs': 25,
+    'num_epochs': 100,
     'max_rollout_len': 280,
-    'n_steps_per_epoch': 1e5,
-    'n_warmup_steps': 5e3,
+    'n_steps_per_epoch': 1e4,
+    'n_warmup_steps': 2.5e3,
 }
 configuration = AttrDict(configuration)
 
@@ -166,6 +166,5 @@ env_config = AttrDict(
     screen_height=ll_model_params.prior_input_res,
     screen_width=ll_model_params.prior_input_res,
 )
-
 agent_config.ll_agent_params.replay_params.dump_replay = False
 agent_config.hl_agent_params.replay_params.dump_replay = False
