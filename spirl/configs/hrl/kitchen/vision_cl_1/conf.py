@@ -2,9 +2,7 @@ from spirl.rl.policies.cl_model_policies import ACClModelPolicy
 from spirl.rl.policies.prior_policies import ACLearnedPriorAugmentedPIPolicy
 from spirl.rl.agents.prior_sac_agent import ActionPriorSACAgent
 import os
-from spirl.models.skill_prior_mdl import ImageSkillPriorMdl
-from spirl.rl.policies.mlp_policies import SplitObsMLPPolicy
-from spirl.rl.components.critic import ConvCritic, SplitObsConvCritic, SplitObsMLPCritic
+from spirl.rl.components.critic import ConvCritic
 from spirl.rl.components.sampler import ImageHierarchicalSampler
 from spirl.configs.default_data_configs.kitchen_vision import data_spec
 import os
@@ -28,7 +26,7 @@ configuration = {
     'environment': KitchenEnv,
     'sampler': ImageHierarchicalSampler,
     'data_dir': '.',
-    'num_epochs': 15,
+    'num_epochs': 25,
     'max_rollout_len': 280,
     'n_steps_per_epoch': 1e5,
     'n_warmup_steps': 5e3,
@@ -169,9 +167,5 @@ env_config = AttrDict(
     screen_width=ll_model_params.prior_input_res,
 )
 
-from spirl.rl.components.replay_buffer import SplitObsUniformReplayBuffer
-agent_config.ll_agent_params.replay = SplitObsUniformReplayBuffer
-agent_config.ll_agent_params.replay_params.unused_obs_size = ll_model_params.prior_input_res**2*3 * 2 + \
-                                                             hl_agent_config.policy_params.action_dim   # ignore HL action
 agent_config.ll_agent_params.replay_params.dump_replay = False
 agent_config.hl_agent_params.replay_params.dump_replay = False
