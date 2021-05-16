@@ -26,10 +26,11 @@ configuration = {
     'environment': PrimitivesEnv,
     'sampler': ImageHierarchicalSampler,
     'data_dir': '.',
-    'num_epochs': 100,
+    'num_epochs': 500,
     'max_rollout_len': 280,
-    'n_steps_per_epoch': 1e4,
-    'n_warmup_steps': 2.5e3,
+    'n_steps_per_epoch': int(1e4),
+    'n_warmup_steps': int(2.5e3),
+    # 'n_warmup_steps': int(1e3),
 }
 configuration = AttrDict(configuration)
 

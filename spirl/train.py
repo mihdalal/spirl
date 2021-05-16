@@ -42,7 +42,7 @@ class ModelTrainer(BaseTrainer):
         # set up logging + training monitoring
         self.writer = self.setup_logging(conf, self.log_dir)
         self.setup_training_monitors()
-        
+
         # buld dataset, model. logger, etc.
         train_params = AttrDict(logger_class=self._hp.logger,
                                 model_class=self._hp.model,
@@ -60,7 +60,7 @@ class ModelTrainer(BaseTrainer):
         self.optimizer = self.get_optimizer_class()(filter(lambda p: p.requires_grad, self.model.parameters()), lr=self._hp.lr)
         self.evaluator = self._hp.evaluator(self._hp, self.log_dir, self._hp.top_of_n_eval,
                                             self._hp.top_comp_metric, tb_logger=self.logger_test)
-        
+
         # load model params from checkpoint
         self.global_step, start_epoch = 0, 0
         if args.resume or conf.ckpt_path is not None:
@@ -72,7 +72,7 @@ class ModelTrainer(BaseTrainer):
             self.train(start_epoch)
         else:
             self.val()
-    
+
     def _default_hparams(self):
         default_dict = ParamDict({
             'model': None,
@@ -94,14 +94,14 @@ class ModelTrainer(BaseTrainer):
             'top_comp_metric': None,    # metric that is used for comparison at eval time (e.g. 'mse')
         })
         return default_dict
-    
+
     def train(self, start_epoch):
         if not self.args.skip_first_val:
             self.val()
-            
+
         for epoch in range(start_epoch, self._hp.num_epochs):
             self.train_epoch(epoch)
-        
+
             if not self.args.dont_save:
                 save_checkpoint({
                     'epoch': epoch,
@@ -122,7 +122,7 @@ class ModelTrainer(BaseTrainer):
         data_load_time = AverageMeter()
         self.log_outputs_interval = self.args.log_interval
         self.log_images_interval = int(epoch_len / self.args.per_epoch_img_logs)
-        
+
         print('starting epoch ', epoch)
 
         for self.batch_idx, sample_batched in enumerate(self.train_loader):
@@ -140,14 +140,14 @@ class ModelTrainer(BaseTrainer):
 
             if self.args.train_loop_pdb:
                 import pdb; pdb.set_trace()
-            
+
             upto_log_time.update(time.time() - end)
             if self.log_outputs_now and not self.args.dont_save:
                 self.model.log_outputs(output, inputs, losses, self.global_step,
                                        log_images=self.log_images_now, phase='train', **self._logging_kwargs)
             batch_time.update(time.time() - end)
             end = time.time()
-            
+
             if self.log_outputs_now:
                 print('GPU {}: {}'.format(os.environ["CUDA_VISIBLE_DEVICES"] if self.use_cuda else 'none',
                                           self._hp.exp_path))
@@ -188,7 +188,7 @@ class ModelTrainer(BaseTrainer):
 
                     losses_meter.update(losses)
                     del losses
-                
+
                 if not self.args.dont_save:
                     if self.evaluator is not None:
                         self.evaluator.dump_results(self.global_step)
@@ -352,7 +352,7 @@ def make_path(exp_dir, conf_path, prefix, make_new_dir):
     # extract the subfolder structure from config path
     path = conf_path.split('configs/', 1)[1]
     if make_new_dir:
-        prefix += datetime_str()
+        prefix += datetime_str() + str(np.random.randint(0, 10000000))
     base_path = os.path.join(exp_dir, path)
     return os.path.join(base_path, prefix) if prefix else base_path
 
@@ -371,6 +371,6 @@ def set_seeds(seed=0, cuda_deterministic=True):
 def save_config(conf_path, exp_conf_path):
     copy(conf_path, exp_conf_path)
 
-        
+
 if __name__ == '__main__':
     ModelTrainer(args=get_args())
